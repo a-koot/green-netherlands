@@ -1,11 +1,16 @@
+#### Shiny App Green Netherlands ####
 
 
+# Load required packages --------------------------------------------------
 library(shiny)
 library(shinydashboard)
 
-#load data 
+
+# Load data ---------------------------------------------------------------
 source("data_wrangle.R")
 
+
+# Create UI ---------------------------------------------------------------
 ui <- dashboardPage(skin = "green",
                     
     dashboardHeader(title = "GroenNederland"),
@@ -16,7 +21,8 @@ ui <- dashboardPage(skin = "green",
                menuSubItem("Land", tabName = "land", icon = icon("leaf")),
                menuSubItem("Bos", tabName = "bos", icon = icon("tree")),
                menuSubItem("Duinen", tabName = "duinen",icon = icon("mountain")),
-               menuSubItem("Heide", tabName = "heide", icon = icon("seedling"))),
+               menuSubItem("Heide", tabName = "heide", icon = icon("seedling"))
+               ),
                
       menuItem("Test", tabName = "test", icon = icon("dashboard"))
                 
@@ -59,13 +65,20 @@ ui <- dashboardPage(skin = "green",
                 
                 fluidRow(
                   box(
+                    title = "Ontwikkeling kenmerkende soorten",
+                    width = 7,
+                    plotOutput("plot_bos_3", height = 500)),
+    
+                  box(
                     title = "Ontwikkeling kenmerkende soorten", 
+                    width = 3,
                     selectInput(inputId = "bos_fauna", label = "Fauna type", 
                                 #TODO niet elke biotoop heeft alle fauna types, selectie maken?
                                 choices = unique(soorten_biotopen$fauna_groep),
                                 selected = "broedvogels"),
-                    selectInput(inputId = "bos_soort", label = "Soort", choices = NULL),
-                    width = 7, plotOutput("plot_bos_3", height = 600)))
+                    selectInput(inputId = "bos_soort", label = "Soort", choices = NULL))
+                )
+                 
                 
         ),
         tabItem(tabName = "duinen",
@@ -78,8 +91,8 @@ ui <- dashboardPage(skin = "green",
               h3("test")
        )
       )
+     )
     )
-)
 
 
 
