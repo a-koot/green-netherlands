@@ -42,6 +42,30 @@ server <- function(input, output) {
   # UI BIODIVERSITEIT:BOS -------------------------------------------------------
   biotoop_type <- "bos"
   
+  # UI - BOS - TABLES -------------------------------------------------------
+  
+  
+  output$table_bos_1 <- renderTable({
+    soorten_biotopen %>% 
+      filter(biotoop == "bos") %>% 
+      group_by(fauna_groep) %>% 
+      summarise(n_distinct(soort))
+    
+  })
+  
+  output$table_bos_2 <- renderTable({
+    soorten_biotopen %>% 
+      filter(biotoop == "bos") %>% 
+      select(soort, trend_gehele_periode) %>% 
+      unique() %>% 
+      count(trend_gehele_periode)
+    
+    
+  })
+  
+
+  # UI - BOS - PLOT 1 -------------------------------------------------------------
+
   output$plot_bos_1 <- renderPlot({
     trend_sum %>% 
       filter(biotoop == biotoop_type) %>% 
@@ -55,7 +79,10 @@ server <- function(input, output) {
                       YTextSize = 5
       ) 
   })
-  
+
+
+# UI - BOS - PLOT 2 --------------------------------------------------------------
+
   output$plot_bos_2 <- renderPlot({
     soorten_biotopen %>% 
       filter(biotoop == biotoop_type,
@@ -72,7 +99,11 @@ server <- function(input, output) {
         caption = "Bron: NEM (Soortenorganisaties, CBS)") +
       theme(text = element_text(size = 15))
   })
-  
+
+
+# UI - BOS - PLOT 3 ---------------------------------------------------------
+
+    
   #REACTIVE INPUT PLOT 3 
   # TODO freezing reactive inputs?
   fauna <- reactive({
@@ -106,24 +137,4 @@ server <- function(input, output) {
       theme(text = element_text(size = 15))
     
   })
-  
-  output$table_bos_1 <- renderTable({
-    soorten_biotopen %>% 
-      filter(biotoop == "bos") %>% 
-      group_by(fauna_groep) %>% 
-      summarise(n_distinct(soort))
-    
-  })
-    
-  output$table_bos_2 <- renderTable({
-    soorten_biotopen %>% 
-      filter(biotoop == "bos") %>% 
-      select(soort, trend_gehele_periode) %>% 
-      unique() %>% 
-      count(trend_gehele_periode)
-    
-    
-  })
-  
-  
 }

@@ -7,7 +7,7 @@ library(readxl)
 library(gghighlight)
 library(plotly)
 library(stringr)
-source("functions/read_nem.R")
+source("read_nem.R")
 library(RColorBrewer)
 library(CGPfunctions)
 
