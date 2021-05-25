@@ -42,15 +42,23 @@ ui <- dashboardPage(skin = "green",
                )
         ),
         tabItem(tabName = "bos",
-                h2("bos tab content"),
+                h2("Bos"),
                 
                 fluidRow(
                   box(
                     title = "Aantal kenmerkende soorten",
+                    width = 3,
                     tableOutput("table_bos_1")),
+                  
+                  # box(
+                  #   title = "Aantal soorten per trendklasse",
+                  #   width = 3,
+                  #     tableOutput("table_bos_2")),
+                  
                   box(
-                    title = "Aantal kenmerkende soorten2",
-                      tableOutput("table_bos_2"))
+                    title = "Ontwikkeling trend bos",
+                    plotOutput("plot_bos_4")
+                  )
                 ),
                 
                 
@@ -64,22 +72,34 @@ ui <- dashboardPage(skin = "green",
                 ),
                 
                 fluidRow(
-                  box(
-                    title = "Ontwikkeling kenmerkende soorten",
-                    width = 7,
-                    plotOutput("plot_bos_3", height = 500)),
-    
-                  box(
-                    title = "Ontwikkeling kenmerkende soorten", 
-                    width = 3,
-                    selectInput(inputId = "bos_fauna", label = "Fauna type", 
+                  column(width = 7,
+                    box(
+                      title = "Ontwikkeling kenmerkende soorten",
+                      width = NULL,
+                      plotOutput("plot_bos_3", height = 500)
+                    )
+                  ),
+                  column(width = 3,
+                    box(
+                      title = "Ontwikkeling kenmerkende soorten", 
+                      width = NULL,
+                      selectInput(inputId = "bos_fauna", label = "Fauna type", 
                                 #TODO niet elke biotoop heeft alle fauna types, selectie maken?
                                 choices = unique(soorten_biotopen$fauna_groep),
                                 selected = "broedvogels"),
-                    selectInput(inputId = "bos_soort", label = "Soort", choices = NULL))
+                      selectInput(inputId = "bos_soort", label = "Soort", choices = NULL)
+                    ),
+                    box(
+                      title = "Informatie geselecteerde soort",
+                      width = NULL,
+                      textOutput("text_species"),
+                      textOutput("text_species_trend"),
+                      textOutput("text_species_trend_10jr"),
+                      textOutput("species_jpg"),
+                      img(src = as.character("species_jpg"))
+                    )
+                  )
                 )
-                 
-                
         ),
         tabItem(tabName = "duinen",
                 h2("duinen tab content")

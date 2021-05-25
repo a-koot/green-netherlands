@@ -40,6 +40,7 @@ server <- function(input, output) {
   
   
   # UI BIODIVERSITEIT:BOS -------------------------------------------------------
+  #TODO tabname (input$tabs) gebruiken als variable biotoop_type
   biotoop_type <- "bos"
   
   # UI - BOS - TABLES -------------------------------------------------------
@@ -50,8 +51,7 @@ server <- function(input, output) {
       filter(biotoop == "bos") %>% 
       group_by(fauna_groep) %>% 
       summarise(n_distinct(soort))
-    
-  })
+  },colnames = FALSE)
   
   output$table_bos_2 <- renderTable({
     soorten_biotopen %>% 
@@ -72,11 +72,15 @@ server <- function(input, output) {
       mutate(percentage = round(percentage, digits = 2)) %>% 
       newggslopegraph(trend_periode, percentage, trendklasse,
                       Title = "Percentage soorten per trendbeoordeling",
-                      SubTitle = biotoop_type,
                       Caption = "Bron: NEM (Soortenorganisaties, CBS)",
                       LineThickness = 1,
-                      LineColor = c("gray","#FDAE61","#FFFFBF",rep("gray",2)),
-                      YTextSize = 5
+                      LineColor = c("gray","#FDAE61","black",rep("gray",3)),
+                      YTextSize = 5,
+                      XTextSize = 13,
+                      CaptionTextSize = 11,
+                      DataTextSize = 4.5,
+                      TitleTextSize = 14
+                      
       ) 
   })
 
@@ -137,4 +141,50 @@ server <- function(input, output) {
       theme(text = element_text(size = 15))
     
   })
+  
+  #filter trendklasses selected species
+  species_trend_geheel <- reactive({soorten_biotopen %>% 
+      filter(biotoop == biotoop_type,
+             soort == input$bos_soort) %>% 
+      pull(trend_gehele_periode) %>% 
+      unique() %>% 
+      as.character()
+  })
+  
+  species_trend_laatste_10jr <- reactive({soorten_biotopen %>% 
+      filter(biotoop == biotoop_type,
+             soort == input$bos_soort) %>% 
+      pull(trend_laatste_10jr) %>% 
+      unique() %>% 
+      as.character()
+  })
+  
+           
+  output$text_species <- renderText({paste("Soort:", input$bos_soort)})
+  
+  output$text_species_trend <- renderText({paste("Trend gehele periode: ",
+                                                 species_trend_geheel())})
+  output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
+                                                 species_trend_laatste_10jr())})
+  
+ # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
+  output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
+  
+# UI - BOS - PLOT 4 -------------------------------------------------------
+  output$plot_bos_4 <- renderPlot({
+    fauna_biotopen %>% filter(biotoop == "bos") %>%
+      ggplot(aes(x = jaar)) +
+      geom_point(aes(y = waarneming_index)) +     
+      geom_line(aes(y = trend_index)) + 
+      ylab("Index") +
+      theme_bw() +
+      scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
+      coord_cartesian(ylim = c(60,125)) +
+      labs(
+        title = "Aantalsontwikkeling kenmerkende soorten bos 1990 - 2018",
+        subtitle = "Index 1990 = 100", 
+        caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
+      theme(text = element_text(size = 15))
+  })
+
 }
