@@ -31,15 +31,17 @@ ui <- dashboardPage(skin = "green",
     dashboardBody(
       tabItems(
         tabItem(tabName = "land",
-               h2("land tab content"),
+               h2("Fauna natuurgebieden land"),
                
                fluidRow(
-                 box(plotOutput("plot_biotopen"))
+                 box(
+                   title = "Trend ontwikkeling natuurgebieden",
+                   plotOutput("plot_biotopen")),
+                 
+                 box(
+                   title = "Percentage soorten per trendbeoordeling",
+                   plotOutput("barplot_biotopen"))
                ),
-               
-               fluidRow(
-                 box(plotOutput("barplot_biotopen"))
-               )
         ),
         tabItem(tabName = "bos",
                 h2("Bos"),
@@ -96,9 +98,10 @@ ui <- dashboardPage(skin = "green",
                       textOutput("text_species_trend"),
                       textOutput("text_species_trend_10jr"),
                       textOutput("species_jpg"),
-                      img(src = as.character("species_jpg"))
+                      img(src = ("species_jpg")
                     )
                   )
+                )
                 )
         ),
         tabItem(tabName = "duinen",
@@ -113,6 +116,7 @@ ui <- dashboardPage(skin = "green",
       )
      )
     )
+
 
 
 

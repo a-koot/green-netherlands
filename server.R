@@ -13,11 +13,13 @@ server <- function(input, output) {
       scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
       coord_cartesian(ylim = c(20,120)) +
       labs(
-        title = "Aantalsontwikkeling kenmerkende soorten natuurgebieden land 1990 - 2018",
+        #title = "Ontwikkeling fauna natuurgebieden land 1990 - 2018",
         subtitle = "Index 1990 = 100", 
-        caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)")
+        caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
+      theme(text = element_text(size = 15))
   })
   
+  #TODO aangeven dat gaat om kenmerkende soorten.Ergens uitleg hierover geven
   output$barplot_biotopen <- renderPlot({
     soorten_biotopen %>% 
       filter(biotoop != "open") %>% 
@@ -35,7 +37,14 @@ server <- function(input, output) {
       coord_flip() +
       scale_fill_brewer(palette = "RdYlGn") +
       theme_minimal() +
-      theme(legend.position = "top")
+      labs(
+        #title = "Percentage soorten per trendbeoordeling",
+        #subtitle = "Index 1990 = 100",
+        caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)",
+        fill = "Trend") +
+      theme(legend.position = "top",
+            text = element_text(size = 15),
+            legend.text = element_text(size = 12))
   })
   
   
