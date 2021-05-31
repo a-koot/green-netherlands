@@ -44,6 +44,7 @@ ui <- dashboardPage(skin = "green",
                ),
         ),
         tabItem(tabName = "bos",
+                textOutput("bos_name"),
                 h2("Bos"),
                 
                 fluidRow(
@@ -98,17 +99,18 @@ ui <- dashboardPage(skin = "green",
                       textOutput("text_species_trend"),
                       textOutput("text_species_trend_10jr"),
                       textOutput("species_jpg"),
-                      img(src = ("species_jpg")
-                    )
+                      img(src = ("species_jpg"))
                   )
                 )
                 )
         ),
         tabItem(tabName = "duinen",
-                h2("duinen tab content")
+                h2("duinen tab content"),
+                textOutput("duinen_name")
         ),
         tabItem(tabName = "heide",
-                h2("heide tab content")
+                h2("heide tab content"),
+                textOutput("heide_name")
         ),
       tabItem(tabName = "test",
               h3("test")

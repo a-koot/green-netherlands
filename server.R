@@ -50,21 +50,33 @@ server <- function(input, output) {
   
   # UI BIODIVERSITEIT:BOS -------------------------------------------------------
   #TODO tabname (input$tabs) gebruiken als variable biotoop_type
-  biotoop_type <- "bos"
+  #biotoop_type <- "bos"
+  biotoop_active <- reactive({input$tabs})
+  
+  #test if it works
+  #TODO remove code later 
+  output$bos_name <- renderText({
+    paste("You've selected:", biotoop_active())
+  })
+  output$duinen_name <- renderText({
+    paste("You've selected:", biotoop_active())
+  })
+  output$heide_name <- renderText({
+    paste("You've selected:", biotoop_active())
+  })
   
   # UI - BOS - TABLES -------------------------------------------------------
   
-  
   output$table_bos_1 <- renderTable({
     soorten_biotopen %>% 
-      filter(biotoop == "bos") %>% 
+      filter(biotoop == biotoop_active()) %>% 
       group_by(fauna_groep) %>% 
       summarise(n_distinct(soort))
   },colnames = FALSE)
   
   output$table_bos_2 <- renderTable({
     soorten_biotopen %>% 
-      filter(biotoop == "bos") %>% 
+      filter(biotoop == biotoop_active()) %>% 
       select(soort, trend_gehele_periode) %>% 
       unique() %>% 
       count(trend_gehele_periode)
@@ -77,7 +89,7 @@ server <- function(input, output) {
 
   output$plot_bos_1 <- renderPlot({
     trend_sum %>% 
-      filter(biotoop == biotoop_type) %>% 
+      filter(biotoop == biotoop_active()) %>% 
       mutate(percentage = round(percentage, digits = 2)) %>% 
       newggslopegraph(trend_periode, percentage, trendklasse,
                       Title = "Percentage soorten per trendbeoordeling",
@@ -98,7 +110,7 @@ server <- function(input, output) {
 
   output$plot_bos_2 <- renderPlot({
     soorten_biotopen %>% 
-      filter(biotoop == biotoop_type,
+      filter(biotoop == biotoop_active(),
              trend_gehele_periode != "onzeker") %>% 
       select(fauna_groep, soort, trend_gehele_periode) %>% 
       unique() %>% 
@@ -107,7 +119,7 @@ server <- function(input, output) {
       scale_fill_brewer(palette = "RdYlGn") +
       theme_bw() +
       labs(
-        title = paste("Aantal kenmerkende soorten", biotoop_type, "per fauna type"),
+        title = paste("Aantal kenmerkende soorten", biotoop_active(), "per fauna type"),
         subtitle = "Index 1990 = 100",
         caption = "Bron: NEM (Soortenorganisaties, CBS)") +
       theme(text = element_text(size = 15))
@@ -120,20 +132,21 @@ server <- function(input, output) {
   #REACTIVE INPUT PLOT 3 
   # TODO freezing reactive inputs?
   fauna <- reactive({
-    filter(soorten_biotopen, fauna_groep == input$bos_fauna & biotoop == "bos")
+    filter(soorten_biotopen, fauna_groep == input$bos_fauna & 
+             biotoop == biotoop_active())
   })
+  
   observeEvent(fauna(), {
     choices <- unique(fauna()$soort)
     updateSelectInput(inputId = "bos_soort", choices = choices)
   })
   
-  #TODO waar moeten onderstaande globals staan?
-  biotoop_type <- "bos"
+
   #fauna_type <- input$bos_fauna
  # soort_highlight <-  input$bos_soort
   output$plot_bos_3 <- renderPlot({
     soorten_biotopen %>% 
-      filter(biotoop == biotoop_type,
+      filter(biotoop == biotoop_active(),
              fauna_groep == input$bos_fauna,
              soort != "kruisbek") %>% 
       ggplot(aes(x = jaar, y = index, color = soort)) +
@@ -144,7 +157,7 @@ server <- function(input, output) {
       theme_bw() +
       labs(
         title = paste("Ontwikkeling populatie-aantallen kenmerkende", input$bos_fauna,
-                      biotoop_type, "1990 - 2019"),
+                      biotoop_active(), "1990 - 2019"),
         subtitle = "Index 1990 = 100",
         caption = "Bron: NEM (Soortenorganisaties, CBS)") +
       theme(text = element_text(size = 15))
@@ -153,7 +166,7 @@ server <- function(input, output) {
   
   #filter trendklasses selected species
   species_trend_geheel <- reactive({soorten_biotopen %>% 
-      filter(biotoop == biotoop_type,
+      filter(biotoop == biotoop_active(),
              soort == input$bos_soort) %>% 
       pull(trend_gehele_periode) %>% 
       unique() %>% 
@@ -161,7 +174,7 @@ server <- function(input, output) {
   })
   
   species_trend_laatste_10jr <- reactive({soorten_biotopen %>% 
-      filter(biotoop == biotoop_type,
+      filter(biotoop == biotoop_active(),
              soort == input$bos_soort) %>% 
       pull(trend_laatste_10jr) %>% 
       unique() %>% 
@@ -176,6 +189,7 @@ server <- function(input, output) {
   output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
                                                  species_trend_laatste_10jr())})
   
+  #FIXME 
  # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
   output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
   
