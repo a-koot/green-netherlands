@@ -93,6 +93,7 @@ clean_soort_string <- function(df) {
   df <- df %>% mutate(soort = str_squish(soort))
 }
 
+#TODO check amfibieen in soorten_biotopen?
 #clean soort string zodat namen overeen komen om te kunnen joinen
 fauna_type_soorten  <- clean_soort_string(fauna_type_soorten)
 soorten_biotopen <- clean_soort_string(soorten_biotopen)

@@ -101,7 +101,6 @@ server <- function(input, output) {
                       CaptionTextSize = 11,
                       DataTextSize = 4.5,
                       TitleTextSize = 14
-                      
       ) 
   })
 
@@ -195,7 +194,8 @@ server <- function(input, output) {
   
 # UI - BOS - PLOT 4 -------------------------------------------------------
   output$plot_bos_4 <- renderPlot({
-    fauna_biotopen %>% filter(biotoop == "bos") %>%
+    fauna_biotopen %>% 
+      filter(biotoop == "bos") %>%
       ggplot(aes(x = jaar)) +
       geom_point(aes(y = waarneming_index)) +     
       geom_line(aes(y = trend_index)) + 
