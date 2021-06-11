@@ -6,7 +6,7 @@ source("data_wrangle.R")
 
 
 # UI MODULE BIOTOOP -------------------------------------------------------
-biotoopUI_1 <- function(id) {
+biotoopUI <- function(id) {
   ns <- NS(id)
   
   fluidRow(
@@ -31,7 +31,7 @@ biotoopUI_2 <- function(id) {
     #   plotOutput("plot_bos_2")),
     box(
       title = "Ontwikkeling trendbeoordeligen",
-      plotOutput(ns("plot_bos_1"))
+      plotOutput(ns("plot_bos_2"))
     )
   )
 }
@@ -40,7 +40,7 @@ biotoopUI_2 <- function(id) {
 
 # SERVER MODULE BIOTOOP ---------------------------------------------------
 #TODO use server modules within modules? Per plot bijvoorbeeld
-biotoopServer <- function(id,biotoop_active,fauna_biotopen) {
+biotoopServer <- function(id,biotoop_active,fauna_biotopen,trend_sum) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -84,7 +84,8 @@ biotoopServer <- function(id,biotoop_active,fauna_biotopen) {
     # PLOT 1 ------------------------------------------------------------------
       output$plot_bos_1 <- renderPlot({
         trend_sum %>% 
-          filter(biotoop == biotoop_active()) %>% 
+          filter(biotoop == "bos") %>% 
+          #filter(biotoop == biotoop_active()) %>% 
           mutate(percentage = round(percentage, digits = 2)) %>% 
           newggslopegraph(trend_periode, percentage, trendklasse,
                           Title = "Percentage soorten per trendbeoordeling",
@@ -96,13 +97,65 @@ biotoopServer <- function(id,biotoop_active,fauna_biotopen) {
                           CaptionTextSize = 11,
                           DataTextSize = 4.5,
                           TitleTextSize = 14
-          ) 
+          )
       })
+      
+
+# PLOT 2 ------------------------------------------------------------------
+      output$plot_bos_2 <- renderPlot({
+        data_biotoop() %>% 
+          filter(biotoop == biotoop_active(),
+                 trend_gehele_periode != "onzeker") %>% 
+          select(fauna_groep, soort, trend_gehele_periode) %>% 
+          unique() %>% 
+          ggplot() + 
+          geom_bar(aes(fauna_groep, fill = trend_gehele_periode)) +
+          scale_fill_brewer(palette = "RdYlGn") +
+          theme_bw() +
+          labs(
+            title = paste("Aantal kenmerkende soorten", biotoop_active(), "per fauna type"),
+            subtitle = "Index 1990 = 100",
+            caption = "Bron: NEM (Soortenorganisaties, CBS)") +
+          theme(text = element_text(size = 15))
+      })
+      
     
   }
  )
 }
 
+# SERVER PLOT 2 -----------------------------------------------------------
+
+biotoopServer_2 <- function(id,biotoop_active,fauna_biotopen) {
+  moduleServer(
+    id,
+    function(input, output, session) {
+      
+      #filter data for active tab "biotoop" 
+      data_biotoop <- reactive({soorten_biotopen %>% 
+          filter(biotoop == biotoop_active())
+      })
+      
+      output$plot_bos_2 <- renderPlot({
+        data_biotoop() %>% 
+          filter(biotoop == biotoop_active(),
+                 trend_gehele_periode != "onzeker") %>% 
+          select(fauna_groep, soort, trend_gehele_periode) %>% 
+          unique() %>% 
+          ggplot() + 
+          geom_bar(aes(fauna_groep, fill = trend_gehele_periode)) +
+          scale_fill_brewer(palette = "RdYlGn") +
+          theme_bw() +
+          labs(
+            title = paste("Aantal kenmerkende soorten", biotoop_active(), "per fauna type"),
+            subtitle = "Index 1990 = 100",
+            caption = "Bron: NEM (Soortenorganisaties, CBS)") +
+          theme(text = element_text(size = 15))
+      })
+    }
+  )
+}
+      
 
 # FUNCTIONS FOR PLOTS  ----------------------------------------------------
 #werkt niet : argument 1 (type 'closure') cannot be handled by 'cat'
@@ -150,6 +203,7 @@ biotoopPlot4Server <- function(id, biotoop_active) {
 }
 
 
+
 # UI TEST -----------------------------------------------------------------
 
 
@@ -173,7 +227,8 @@ ui <- dashboardPage(skin = "green",
                     dashboardBody(
                       tabItems(
                         tabItem(tabName = "bos",
-                                biotoopUI("ui1")
+                                biotoopUI("ui1"),
+                                biotoopUI_2("ui1-2")
                                 
                         ),
                         tabItem(tabName = "duinen",
@@ -195,7 +250,8 @@ server <- function(input, output, session) {
   #TODO biotoop_active inside didn't work -> why?
   biotoop_active <- reactive({input$tabs})
   
-  biotoopServer("ui1",biotoop_active,fauna_biotopen)
+  biotoopServer("ui1",biotoop_active,fauna_biotopen,trend_sum)
+  biotoopServer_2("ui1-2",biotoop_active)
   biotoopServer("ui2",biotoop_active,fauna_biotopen)
   biotoopServer("ui3", biotoop_active,fauna_biotopen)
 }
