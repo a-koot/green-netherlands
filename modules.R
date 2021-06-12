@@ -87,8 +87,64 @@ slopegraphUI <- function(id) {
 }
 
 lineplotSoortUI <- function(id) {
-  
+  ns <- NS(id)
+  fluidRow(
+    column(width = 7,
+           box(
+             title = "Ontwikkeling kenmerkende soorten",
+             width = NULL,
+             plotOutput(ns("plot_bos_3"), height = 500)
+           )
+    ),
+    column(width = 3,
+           box(
+             title = "Ontwikkeling kenmerkende soorten",
+             width = NULL,
+             selectInput(inputId = ns("bos_fauna"), label = "Fauna type",
+                         #TODO niet elke biotoop heeft alle fauna types, selectie maken?
+                         choices = unique(soorten_biotopen$fauna_groep),
+                         selected = "broedvogels"),
+             selectInput(inputId = ns("bos_soort"), label = "Soort", choices = NULL)
+           )
+    )
+  )
+
 }
+
+lineplotSoortOutput <- function(id) {
+  ns <- NS(id)
+  box(
+    title = "Ontwikkeling kenmerkende soorten",
+    width = NULL,
+    plotOutput(ns("plot_bos_3"), height = 500)
+  )
+}
+
+lineplotSoortInput <- function(id) {
+  ns <- NS(id)
+  box(
+    title = "Ontwikkeling kenmerkende soorten", 
+    width = NULL,
+    selectInput(inputId = ns("bos_fauna"), label = "Fauna type", 
+              #TODO niet elke biotoop heeft alle fauna types, selectie maken?
+                choices = unique(soorten_biotopen$fauna_groep),
+                selected = "broedvogels"),
+    selectInput(inputId = ns("bos_soort"), label = "Soort", choices = NULL)
+    )
+}
+
+#WERKT NIIET, kan dat output input niet vinden in server 
+# lineplotSoortUI <- function(id) {
+#   ns <- NS(id)
+#   
+#   fluidRow(
+#     lineplotSoortInput(ns("lineplot_2_input")),
+#     lineplotSoortOutput(ns("lineplot_2_output"))
+#   )
+#   # column(width = 7, lineplotSoortOutput(ns("lineplot_2_output")))
+#   # column(width = 3, lineplotSoortInput(ns("lineplot_2_input")))
+#   
+# }
 
 
 # OUTER BIOTOOP UI MODULE -------------------------------------------------
@@ -107,7 +163,7 @@ biotoopUI <- function(id) {
     slopegraphUI(ns("slopegraph"))
     ),
     
-    #below module already includes a fluidRow
+    #module already includes a fluidRow
     lineplotSoortUI(ns("lineplot_2"))
   )
 }
@@ -397,18 +453,22 @@ slopegraphServer <- function(id, biotoop_active){
 
 
 # SERVER LINEPLOT 2: SOORT ------------------------------------------------
-lineplotSoortServer <- function(id,biotoop_active) {
+
+lineplotSoortServer <- function(id, active_tab) {
   moduleServer(
     id,
-    function(input, output, session) {
+    function(input,output, session) {
       
-      #REACTIVE INPUT PLOT 3 
+      selected_fauna <- reactive({input$bos_fauna})
+      selected_soort <- reactive({input$bos_soort})
+      
+      # REACTIVE INPUT PLOT 3
       # TODO freezing reactive inputs?
       fauna <- reactive({
-        filter(soorten_biotopen, fauna_groep == input$bos_fauna & 
-                 biotoop == biotoop_active())
+        filter(soorten_biotopen, fauna_groep == selected_fauna() &
+                 biotoop == active_tab())
       })
-      
+
       observeEvent(fauna(), {
         choices <- unique(fauna()$soort)
         updateSelectInput(inputId = "bos_soort", choices = choices)
@@ -416,55 +476,54 @@ lineplotSoortServer <- function(id,biotoop_active) {
       
       output$plot_bos_3 <- renderPlot({
         soorten_biotopen %>% 
-          filter(biotoop == biotoop_active(),
-                 fauna_groep == input$bos_fauna,
+          filter(biotoop == active_tab(),
+                 fauna_groep == selected_fauna(),
                  soort != "kruisbek") %>% 
           ggplot(aes(x = jaar, y = index, color = soort)) +
           geom_point() + 
           geom_line() +
           expand_limits(x = 2020) +#ruimte voor lable soort highlight
-          gghighlight(soort == input$bos_soort, label_params = list(nudge_x = 50)) +
+          gghighlight(soort == selected_soort(), label_params = list(nudge_x = 50)) +
           theme_bw() +
           labs(
-            title = paste("Ontwikkeling populatie-aantallen kenmerkende", input$bos_fauna,
-                          biotoop_active(), "1990 - 2019"),
+            title = paste("Ontwikkeling populatie-aantallen kenmerkende", 
+                          selected_fauna(),
+                          active_tab(), "1990 - 2019"),
             subtitle = "Index 1990 = 100",
             caption = "Bron: NEM (Soortenorganisaties, CBS)") +
           theme(text = element_text(size = 15))
         
       })
       
-      #filter trendklasses selected species
-      species_trend_geheel <- reactive({soorten_biotopen %>% 
-          filter(biotoop == biotoop_active(),
-                 soort == input$bos_soort) %>% 
-          pull(trend_gehele_periode) %>% 
-          unique() %>% 
-          as.character()
-      })
-      
-      species_trend_laatste_10jr <- reactive({soorten_biotopen %>% 
-          filter(biotoop == biotoop_active(),
-                 soort == input$bos_soort) %>% 
-          pull(trend_laatste_10jr) %>% 
-          unique() %>% 
-          as.character()
-      })
-      
-      
-      output$text_species <- renderText({paste("Soort:", input$bos_soort)})
-      
-      output$text_species_trend <- renderText({paste("Trend gehele periode: ",
-                                                     species_trend_geheel())})
-      output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
-                                                          species_trend_laatste_10jr())})
-      
-      #FIXME 
-      # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
-      output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
-      
-      
-
+      #       # EXTRA INFO SPECIES ------------------------------------------------------
+      #       # #filter trendklasses selected species
+      #       # species_trend_geheel <- reactive({soorten_biotopen %>% 
+      #       #     filter(biotoop == biotoop_active(),
+      #       #            soort == input$bos_soort) %>% 
+      #       #     pull(trend_gehele_periode) %>% 
+      #       #     unique() %>% 
+      #       #     as.character()
+      #       # })
+      #       # 
+      #       # species_trend_laatste_10jr <- reactive({soorten_biotopen %>% 
+      #       #     filter(biotoop == biotoop_active(),
+      #       #            soort == input$bos_soort) %>% 
+      #       #     pull(trend_laatste_10jr) %>% 
+      #       #     unique() %>% 
+      #       #     as.character()
+      #       # })
+      #       # 
+      #       # 
+      #       # output$text_species <- renderText({paste("Soort:", input$bos_soort)})
+      #       # 
+      #       # output$text_species_trend <- renderText({paste("Trend gehele periode: ",
+      #       #                                                species_trend_geheel())})
+      #       # output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
+      #       #                                                     species_trend_laatste_10jr())})
+      #       # 
+      #       # #FIXME 
+      #       # # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
+      #       # output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
       
     }
   )
@@ -542,6 +601,7 @@ ui <- dashboardPage(skin = "green",
                         tabItem(tabName = "land",
                                 h2("Fauna natuurgebieden land"),
                                 landUI("land1")
+        
                         ),
                         tabItem(tabName = "bos",
                                 biotoopUI("ui1"),
@@ -570,7 +630,7 @@ outerServer <- function(id, biotoop_active){
       barplotServer("barplot", biotoop_active)
       slopegraphServer("slopegraph", biotoop_active)
       #FIXME lineplotSoort server frix reactive inputs 
-      # lineplotSoortServer("lineplot_2", biotoop_active)
+      lineplotSoortServer("lineplot_2", biotoop_active)
     }
   )
 }
@@ -583,6 +643,7 @@ server <- function(input, output, session) {
   #make active tab as value to use to filter data etc.
   #TODO biotoop_active inside didn't work -> why?
   biotoop_active <- reactive({input$tabs})
+   
   outerServer("ui1", biotoop_active)
   outerServer("ui2", biotoop_active)
   outerServer("ui3", biotoop_active)
