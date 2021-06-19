@@ -644,10 +644,10 @@ server <- function(input, output, session) {
   #TODO biotoop_active inside didn't work -> why?
   biotoop_active <- reactive({input$tabs})
    
-  outerServer("ui1", biotoop_active)
-  outerServer("ui2", biotoop_active)
-  outerServer("ui3", biotoop_active)
-  landServer("land1", biotoop_active)
+  biotoopServer("ui1", biotoop_active)
+  biotoopServer("ui2", biotoop_active)
+  biotoopServer("ui3", biotoop_active)
+  biotoopServer("land1", biotoop_active)
 
 }
 

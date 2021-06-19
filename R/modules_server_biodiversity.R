@@ -1,6 +1,6 @@
 source("R/modules_plots_biodiversity.R")
 
-outerServer <- function(id, biotoop_active){
+biotoopServer <- function(id, biotoop_active){
   moduleServer(
     id,
     function(input,output,session) {
