@@ -11,10 +11,11 @@ sumTableUI <- function(id) {
   )
 }
 
-lineplotBiotoopUI <- function(id) {
+#TODO title is het bij elke biotoop de trend voor populatie aantallen?
+lineplotBiotoopUI <- function(id,active_tab) {
   ns <- NS(id)
   box(
-    title = "Ontwikkeling trend bos",
+    title = textOutput(ns("txt_lineplot_1")),
     plotOutput(ns("plot_bos_4"))
   )
 }
@@ -53,21 +54,30 @@ lineplotSoortUI <- function(id) {
                          choices = unique(soorten_biotopen$fauna_groep),
                          selected = "broedvogels"),
              selectInput(inputId = ns("bos_soort"), label = "Soort", choices = NULL)
-           )
+           ),
+           box(
+             title = "Geselecteerde soort",
+             width = NULL,
+             textOutput(ns("text_species")),
+             textOutput(ns("text_species_trend")),
+             textOutput(ns("text_species_trend_10jr"))
+             # textOutput("species_jpg"),
+             # img(src = ("species_jpg"))
+           ),
     )
   )
   
 }
 
 # SERVER TABLE 1 ----------------------------------------------------------
-sumTableServer <- function(id,biotoop_active) {
+sumTableServer <- function(id,active_tab) {
   moduleServer(
     id,
     function(input, output, session) {
       
       #filter data for active tab "biotoop" 
       data_biotoop <- reactive({soorten_biotopen %>% 
-          filter(biotoop == biotoop_active())
+          filter(biotoop == active_tab())
       })
       
       # BIOTOOP TABLES ---------------------------------------------------------
@@ -81,13 +91,18 @@ sumTableServer <- function(id,biotoop_active) {
 }
 
 # SERVER lineplot biotoop  ------------------------------------------------
-lineplotBiotoopServer <- function(id, biotoop_active) {
+lineplotBiotoopServer <- function(id, active_tab) {
   moduleServer(
     id,
     function(input, output, session) {
+      
+      output$txt_lineplot_1 <- renderText({
+        paste("Trend fauna", active_tab())
+      })
+      
       output$plot_bos_4 <- renderPlot({
         fauna_biotopen %>% 
-          filter(biotoop == biotoop_active()) %>%
+          filter(biotoop == active_tab()) %>%
           ggplot(aes(x = jaar)) +
           geom_point(aes(y = waarneming_index)) +     
           geom_line(aes(y = trend_index)) + 
@@ -96,7 +111,7 @@ lineplotBiotoopServer <- function(id, biotoop_active) {
           scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
           # coord_cartesian(ylim = c(60,125)) +
           labs(
-            title = "Aantalsontwikkeling kenmerkende soorten bos 1990 - 2018",
+            #title = "Aantalsontwikkeling kenmerkende soorten 1990 - 2018",
             subtitle = "Index 1990 = 100", 
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
           theme(text = element_text(size = 15))
@@ -107,18 +122,18 @@ lineplotBiotoopServer <- function(id, biotoop_active) {
 }
 
 # SERVER BARPLOT ----------------------------------------------------------
-barplotServer <- function(id,biotoop_active) {
+barplotServer <- function(id,active_tab) {
   moduleServer(
     id,
     function(input, output, session) {
       
       data_biotoop <- reactive({soorten_biotopen %>% 
-          filter(biotoop == biotoop_active())
+          filter(biotoop == active_tab())
       })
       
       output$plot_bos_2 <- renderPlot({
         data_biotoop() %>% 
-          filter(biotoop == biotoop_active(),
+          filter(biotoop == active_tab(),
                  trend_gehele_periode != "onzeker") %>% 
           select(fauna_groep, soort, trend_gehele_periode) %>% 
           unique() %>% 
@@ -127,7 +142,7 @@ barplotServer <- function(id,biotoop_active) {
           scale_fill_brewer(palette = "RdYlGn") +
           theme_bw() +
           labs(
-            title = paste("Aantal kenmerkende soorten", biotoop_active(), "per fauna type"),
+            title = "Aantal kenmerkende soorten per fauna type",
             subtitle = "Index 1990 = 100",
             caption = "Bron: NEM (Soortenorganisaties, CBS)") +
           theme(text = element_text(size = 15))
@@ -136,51 +151,17 @@ barplotServer <- function(id,biotoop_active) {
     }
   )
 }
-
-
-# SERVER PLOT 2 -----------------------------------------------------------
-
-biotoopServer_2 <- function(id,biotoop_active,fauna_biotopen) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      
-      #filter data for active tab "biotoop" 
-      data_biotoop <- reactive({soorten_biotopen %>% 
-          filter(biotoop == biotoop_active())
-      })
-      
-      output$plot_bos_2 <- renderPlot({
-        data_biotoop() %>% 
-          filter(biotoop == biotoop_active(),
-                 trend_gehele_periode != "onzeker") %>% 
-          select(fauna_groep, soort, trend_gehele_periode) %>% 
-          unique() %>% 
-          ggplot() + 
-          geom_bar(aes(fauna_groep, fill = trend_gehele_periode)) +
-          scale_fill_brewer(palette = "RdYlGn") +
-          theme_bw() +
-          labs(
-            title = paste("Aantal kenmerkende soorten", biotoop_active(), "per fauna type"),
-            subtitle = "Index 1990 = 100",
-            caption = "Bron: NEM (Soortenorganisaties, CBS)") +
-          theme(text = element_text(size = 15))
-      })
-    }
-  )
-}
-
 
 
 # SERVER SLOPEGRAPH -------------------------------------------------------
-slopegraphServer <- function(id, biotoop_active){
+slopegraphServer <- function(id, active_tab){
   moduleServer(
     id,
     function(input,output,session) {
       output$plot_bos_1 <- renderPlot({
         trend_sum %>% 
           #filter(biotoop == "bos") %>% 
-          filter(biotoop == biotoop_active()) %>% 
+          filter(biotoop == active_tab()) %>% 
           mutate(percentage = round(percentage, digits = 2)) %>% 
           newggslopegraph(trend_periode, percentage, trendklasse,
                           Title = "Percentage soorten per trendbeoordeling",
@@ -194,9 +175,6 @@ slopegraphServer <- function(id, biotoop_active){
                           TitleTextSize = 14
           )
       })
-      
-      
-      
     }
   )
 }
@@ -234,47 +212,47 @@ lineplotSoortServer <- function(id, active_tab) {
           geom_point() + 
           geom_line() +
           expand_limits(x = 2020) +#ruimte voor lable soort highlight
-          gghighlight(soort == selected_soort(), label_params = list(nudge_x = 50)) +
+          gghighlight(soort == selected_soort(), use_group_by = FALSE, 
+                      label_params = list(size = 6, nudge_x = 60)) +
           theme_bw() +
           labs(
-            title = paste("Ontwikkeling populatie-aantallen kenmerkende", 
-                          selected_fauna(),
-                          active_tab(), "1990 - 2019"),
+            # title = paste("Ontwikkeling populatie-aantallen kenmerkende", 
+            #               selected_fauna(),
+            #               active_tab(), "1990 - 2019"),
             subtitle = "Index 1990 = 100",
             caption = "Bron: NEM (Soortenorganisaties, CBS)") +
           theme(text = element_text(size = 15))
         
       })
-      
-      #       # EXTRA INFO SPECIES ------------------------------------------------------
-      #       # #filter trendklasses selected species
-      #       # species_trend_geheel <- reactive({soorten_biotopen %>% 
-      #       #     filter(biotoop == biotoop_active(),
-      #       #            soort == input$bos_soort) %>% 
-      #       #     pull(trend_gehele_periode) %>% 
-      #       #     unique() %>% 
-      #       #     as.character()
-      #       # })
-      #       # 
-      #       # species_trend_laatste_10jr <- reactive({soorten_biotopen %>% 
-      #       #     filter(biotoop == biotoop_active(),
-      #       #            soort == input$bos_soort) %>% 
-      #       #     pull(trend_laatste_10jr) %>% 
-      #       #     unique() %>% 
-      #       #     as.character()
-      #       # })
-      #       # 
-      #       # 
-      #       # output$text_species <- renderText({paste("Soort:", input$bos_soort)})
-      #       # 
-      #       # output$text_species_trend <- renderText({paste("Trend gehele periode: ",
-      #       #                                                species_trend_geheel())})
-      #       # output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
-      #       #                                                     species_trend_laatste_10jr())})
-      #       # 
-      #       # #FIXME 
-      #       # # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
-      #       # output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
+            # EXTRA INFO SPECIES ------------------------------------------------------
+            #filter trendklasses selected species
+      species_trend_geheel <- reactive({soorten_biotopen %>%
+                filter(biotoop == active_tab(),
+                       soort == input$bos_soort) %>%
+                pull(trend_gehele_periode) %>%
+                unique() %>%
+                as.character()
+            })
+
+      species_trend_laatste_10jr <- reactive({soorten_biotopen %>%
+                filter(biotoop == active_tab(),
+                       soort == input$bos_soort) %>%
+                pull(trend_laatste_10jr) %>%
+                unique() %>%
+                as.character()
+            })
+
+
+      output$text_species <- renderText({paste("Soort:", input$bos_soort)})
+
+      output$text_species_trend <- renderText({paste("Trend gehele periode: ",
+                                                           species_trend_geheel())})
+      output$text_species_trend_10jr <- renderText({paste("Trend laatste 10 jaar: ",
+                                                                species_trend_laatste_10jr())})
+
+      #FIXME
+      # output$species_jpg <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
+      output$img <- renderText({gsub(" ","",paste(input$bos_soort, ".jpg"))})
       
     }
   )
