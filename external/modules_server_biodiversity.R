@@ -1,4 +1,4 @@
-source("R/modules_plots_biodiversity.R")
+source("external/modules_plots_biotoop.R")
 
 biotoopServer <- function(id, biotoop_active){
   moduleServer(

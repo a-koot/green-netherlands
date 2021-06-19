@@ -1,13 +1,13 @@
 #### Shiny App Green Netherlands ####
 
 
-# Load required packages --------------------------------------------------
-library(shiny)
-library(shinydashboard)
-
-
-# Load data ---------------------------------------------------------------
-source("R/data_wrangle.R")
+# # Load required packages --------------------------------------------------
+# library(shiny)
+# library(shinydashboard)
+# 
+# 
+# # Load data ---------------------------------------------------------------
+# source("R/data_wrangle.R")
 
 
 # Create UI ---------------------------------------------------------------

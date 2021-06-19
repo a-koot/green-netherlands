@@ -1,4 +1,4 @@
-source("external/modules_plots_biodiversity.R")
+source("external/modules_plots_biotoop.R")
 
 biotoopUI <- function(id) {
   ns <- NS(id)
