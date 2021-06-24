@@ -5,13 +5,11 @@ landUI <- function(id) {
   fluidRow(
     box(
       title = "Ontwikkeling fauna natuurgebieden",
-      width = 5,
       plotOutput(ns("lineplot_land"))
     ),
     
     box(
-      title = "Percentage soorten per trendbeoordeling",
-      width = 7, 
+      title = "Verhouding trendbeoordelingen natuurgebieden",
       plotOutput(ns("barplot_land"))
     )
   )
@@ -53,9 +51,12 @@ landServer <- function(id,biotoop_active) {
           unique() %>%
           ggplot() +
           geom_bar(aes(biotoop, fill = trend_gehele_periode),
-                   position = position_fill(reverse = TRUE)) +
+                   position = position_fill(reverse = TRUE)) + 
+          scale_y_continuous(labels = scales::percent) +
+          scale_fill_brewer(palette = "RdYlGn", name = "Trendklasse",
+                            labels = c("--", "-","0","+","++")) +
+          ylab("Percentage") +
           coord_flip() +
-          scale_fill_brewer(palette = "RdYlGn") +
           theme_minimal() +
           labs(
             #title = "Percentage soorten per trendbeoordeling",
@@ -63,9 +64,8 @@ landServer <- function(id,biotoop_active) {
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)",
             fill = "Trend") +
           theme(legend.position = "top",
-                #legend.justification = "top",
                 text = element_text(size = 16),
-                legend.text = element_text(size = 13))
+                legend.text = element_text(size = 13, face = "bold")) 
       })
     }
   )
