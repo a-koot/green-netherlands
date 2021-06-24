@@ -4,12 +4,14 @@ landUI <- function(id) {
   
   fluidRow(
     box(
-      title = "Trend ontwikkeling natuurgebieden",
+      title = "Ontwikkeling fauna natuurgebieden",
+      width = 5,
       plotOutput(ns("lineplot_land"))
     ),
     
     box(
       title = "Percentage soorten per trendbeoordeling",
+      width = 7, 
       plotOutput(ns("barplot_land"))
     )
   )
@@ -27,14 +29,14 @@ landServer <- function(id,biotoop_active) {
           geom_line(aes(y = trend_index)) + 
           ylab("Index") +
           theme_bw() +
-          gghighlight() +
+          gghighlight(label_params = list(size = 6)) +
           scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
           coord_cartesian(ylim = c(20,120)) +
           labs(
-            #title = "Ontwikkeling fauna natuurgebieden land 1990 - 2018",
-            subtitle = "Index 1990 = 100", 
+           # title = "Ontwikkeling populaties kenmerkende soorten",
+            subtitle = "Index (trend 1990 = 100)", 
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
-          theme(text = element_text(size = 15))
+          theme(text = element_text(size = 16))
       })
       
       #TODO aangeven dat gaat om kenmerkende soorten.Ergens uitleg hierover geven
@@ -61,8 +63,9 @@ landServer <- function(id,biotoop_active) {
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)",
             fill = "Trend") +
           theme(legend.position = "top",
-                text = element_text(size = 15),
-                legend.text = element_text(size = 12))
+                #legend.justification = "top",
+                text = element_text(size = 16),
+                legend.text = element_text(size = 13))
       })
     }
   )
