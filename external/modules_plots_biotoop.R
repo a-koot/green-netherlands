@@ -23,7 +23,7 @@ lineplotBiotoopUI <- function(id,active_tab) {
 barplotUI <- function(id) {
   ns <- NS(id)
   box(
-    title = "Fauna type en trendbeoordeling",
+    title = "Aantal soorten per fauna en trendklasse",
     plotOutput(ns("plot_bos_2"))
   )
 }
@@ -139,15 +139,19 @@ barplotServer <- function(id,active_tab) {
           unique() %>% 
           ggplot() + 
           geom_bar(aes(fauna_groep, fill = trend_gehele_periode)) +
-          scale_fill_brewer(palette = "RdYlGn") +
+          scale_fill_brewer(palette = "RdYlGn", name = "Trendklasse",
+                            labels = c("--", "-","0","+","++")) +
+          xlab("Fauna type") + 
+          ylab("Aantal") +
           theme_bw() +
           labs(
-            title = "Aantal kenmerkende soorten per fauna type",
+            #title = "Aantal kenmerkende soorten per fauna type",
             subtitle = "Index 1990 = 100",
             caption = "Bron: NEM (Soortenorganisaties, CBS)") +
-          theme(text = element_text(size = 15))
+           theme(text = element_text(size = 16),
+            legend.text = element_text(size = 13, face = "bold"))
       })
-      
+       
     }
   )
 }
@@ -160,8 +164,15 @@ slopegraphServer <- function(id, active_tab){
     function(input,output,session) {
       output$plot_bos_1 <- renderPlot({
         trend_sum %>% 
-          #filter(biotoop == "bos") %>% 
           filter(biotoop == active_tab()) %>% 
+          # mutate(trendklasse = fct_recode(trendklasse,
+          #                                 "--" = "sterke afname",
+          #                                 "-" = "matige afname",
+          #                                 "0" = "stabiel",
+          #                                 "+" = "matige toename",
+          #                                 "++" = "sterke toename",
+          #                                 "~" = "onzeker"
+          #                                 )) %>% 
           mutate(percentage = round(percentage, digits = 2)) %>% 
           newggslopegraph(trend_periode, percentage, trendklasse,
                           Title = "Percentage soorten per trendbeoordeling",

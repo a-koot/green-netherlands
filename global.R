@@ -1,7 +1,8 @@
 # Load required packages --------------------------------------------------
 library(shiny)
 library(shinydashboard)
-
+library(gifski)
+library(gganimate)
 
 # Load data ---------------------------------------------------------------
 source("external/data_wrangle.R")
