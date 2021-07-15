@@ -23,8 +23,8 @@ lineplotBiotoopUI <- function(id,active_tab) {
 barplotUI <- function(id) {
   ns <- NS(id)
   box(
-    title = "Fauna type en trendbeoordeling",
-    plotOutput(ns("plot_bos_2"))
+    title = "Aantal soorten per fauna en trendklasse",
+    plotlyOutput(ns("plot_bos_2"))
   )
 }
 
@@ -53,7 +53,8 @@ lineplotSoortUI <- function(id) {
                          #TODO niet elke biotoop heeft alle fauna types, selectie maken?
                          choices = unique(soorten_biotopen$fauna_groep),
                          selected = "broedvogels"),
-             selectInput(inputId = ns("bos_soort"), label = "Soort", choices = NULL)
+             selectizeInput(inputId = ns("bos_soort"), label = "Soort", choices = NULL,
+                         multiple = TRUE, options = list(maxItems = 4))
            ),
            box(
              title = "Geselecteerde soort",
@@ -131,23 +132,77 @@ barplotServer <- function(id,active_tab) {
           filter(biotoop == active_tab())
       })
       
-      output$plot_bos_2 <- renderPlot({
-        data_biotoop() %>% 
-          filter(biotoop == active_tab(),
-                 trend_gehele_periode != "onzeker") %>% 
-          select(fauna_groep, soort, trend_gehele_periode) %>% 
-          unique() %>% 
-          ggplot() + 
-          geom_bar(aes(fauna_groep, fill = trend_gehele_periode)) +
-          scale_fill_brewer(palette = "RdYlGn") +
-          theme_bw() +
-          labs(
-            title = "Aantal kenmerkende soorten per fauna type",
-            subtitle = "Index 1990 = 100",
-            caption = "Bron: NEM (Soortenorganisaties, CBS)") +
-          theme(text = element_text(size = 15))
+      df_totals <- reactive({data_biotoop() %>% 
+        filter(
+               trend_gehele_periode != "onzeker") %>%
+        group_by(fauna_groep) %>% 
+        #to use fauna groep sum as labels in barplot
+        mutate(groep_sum = n_distinct(soort)) %>% 
+        ungroup() %>% 
+        mutate(trend_gehele_symbols = fct_recode(trend_gehele_periode,
+                                                 "--" = "sterke afname",
+                                                 "-" = "matige afname",
+                                                 "0" = "stabiel",
+                                                 "+" = "matige toename",
+                                                 "++" = "sterke toename",
+                                                 "~" = "onzeker"
+        )) %>%
+        mutate(trend_gehele_symbols = factor(trend_gehele_symbols,
+                                             levels = rev(levels(trend_gehele_symbols))
+        )
+        ) %>% 
+        select(fauna_groep, soort, trend_gehele_periode,trend_gehele_symbols,groep_sum) %>%
+        unique() %>% 
+        #to get number of species per trend to use for hover info with adjusted layout
+        group_by(fauna_groep, trend_gehele_periode) %>% 
+        mutate(groep_trend_sum = n_distinct(soort)) %>% 
+        ungroup()
       })
       
+      
+      
+      output$plot_bos_2 <- renderPlotly({
+        gg <- 
+          ggplot(df_totals(),aes(reorder(fauna_groep, groep_sum), fill = trend_gehele_symbols,
+                     text = paste(fauna_groep,
+                                  "<br>Aantal soorten:", groep_trend_sum,
+                                  "<br>Trend:", trend_gehele_periode))) +
+          geom_bar() + 
+          coord_flip() +
+          geom_text(aes(fauna_groep, groep_sum,label = groep_sum, fill = NULL,
+                        hjust = -1.5)) +
+          ylim(0,max(df_totals()$groep_sum) * 1.05) +
+          scale_fill_brewer(palette = "RdYlGn", direction = -1,
+                            name = "Trend",
+                            labels = c("++", "+","0","-","--")) +
+          xlab("Fauna type") +
+          ylab("Aantal soorten") +
+          theme_bw() +
+          theme_minimal() +
+          theme(text = element_text(size = 16),
+                legend.text = element_text(size = 13, face = "bold"),
+                legend.position = "top",
+                axis.title.y = element_blank(),
+                panel.grid.major.x = element_blank(),
+                panel.grid.major.y = element_blank(),
+                legend.title = element_blank())
+        
+
+        p <- ggplotly(gg, tooltip = c("text")) %>%
+          style(textposition = "right",
+                hoverinfo = "none", traces = c(6)) %>%
+          layout(legend = list(position = "h",x = 1, y = 1,
+                               title = list(text = "Trend")),
+                 annotations = list(x = 1, y = 0.01,
+                                    text = "Data bron: NEM(Soortenorganisaties, \n CBS)",
+                                    showarrow = F, xref = "paper", yref = "paper",
+                                    xanchor = "right", yanchor = "auto",
+                                    xshift = 0, yshift = 0,
+                                    font = list(size = 9))
+          )
+        p
+      })
+       
     }
   )
 }
@@ -160,8 +215,15 @@ slopegraphServer <- function(id, active_tab){
     function(input,output,session) {
       output$plot_bos_1 <- renderPlot({
         trend_sum %>% 
-          #filter(biotoop == "bos") %>% 
           filter(biotoop == active_tab()) %>% 
+          # mutate(trendklasse = fct_recode(trendklasse,
+          #                                 "--" = "sterke afname",
+          #                                 "-" = "matige afname",
+          #                                 "0" = "stabiel",
+          #                                 "+" = "matige toename",
+          #                                 "++" = "sterke toename",
+          #                                 "~" = "onzeker"
+          #                                 )) %>%
           mutate(percentage = round(percentage, digits = 2)) %>% 
           newggslopegraph(trend_periode, percentage, trendklasse,
                           Title = "Percentage soorten per trendbeoordeling",
@@ -212,7 +274,7 @@ lineplotSoortServer <- function(id, active_tab) {
           geom_point() + 
           geom_line() +
           expand_limits(x = 2020) +#ruimte voor lable soort highlight
-          gghighlight(soort == selected_soort(), use_group_by = FALSE, 
+          gghighlight(soort %in% selected_soort(), use_group_by = FALSE,
                       label_params = list(size = 6, nudge_x = 60)) +
           theme_bw() +
           labs(
@@ -221,14 +283,16 @@ lineplotSoortServer <- function(id, active_tab) {
             #               active_tab(), "1990 - 2019"),
             subtitle = "Index 1990 = 100",
             caption = "Bron: NEM (Soortenorganisaties, CBS)") +
-          theme(text = element_text(size = 15))
+          theme(text = element_text(size = 16))
+                # legend.position = "right",
+                # legend.text = element_text(size = 13, face = "bold"))
         
       })
             # EXTRA INFO SPECIES ------------------------------------------------------
             #filter trendklasses selected species
       species_trend_geheel <- reactive({soorten_biotopen %>%
                 filter(biotoop == active_tab(),
-                       soort == input$bos_soort) %>%
+                       soort %in% input$bos_soort) %>%
                 pull(trend_gehele_periode) %>%
                 unique() %>%
                 as.character()
@@ -236,7 +300,7 @@ lineplotSoortServer <- function(id, active_tab) {
 
       species_trend_laatste_10jr <- reactive({soorten_biotopen %>%
                 filter(biotoop == active_tab(),
-                       soort == input$bos_soort) %>%
+                       soort %in% input$bos_soort) %>%
                 pull(trend_laatste_10jr) %>%
                 unique() %>%
                 as.character()

@@ -5,13 +5,11 @@ landUI <- function(id) {
   fluidRow(
     box(
       title = "Ontwikkeling fauna natuurgebieden",
-      width = 5,
       plotOutput(ns("lineplot_land"))
     ),
     
     box(
-      title = "Percentage soorten per trendbeoordeling",
-      width = 7, 
+      title = "Verhouding trendbeoordelingen natuurgebieden",
       plotOutput(ns("barplot_land"))
     )
   )
@@ -26,18 +24,49 @@ landServer <- function(id,biotoop_active) {
       output$lineplot_land <- renderPlot({
         fauna_biotopen %>% filter(biotoop != "open") %>%
           ggplot(aes(x = jaar, color = biotoop)) +
-          geom_line(aes(y = trend_index)) + 
+          geom_line(aes(y = trend_index)) +
           ylab("Index") +
           theme_bw() +
           gghighlight(label_params = list(size = 6)) +
-          scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
+          scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) +
           coord_cartesian(ylim = c(20,120)) +
           labs(
            # title = "Ontwikkeling populaties kenmerkende soorten",
-            subtitle = "Index (trend 1990 = 100)", 
+            subtitle = "Index (trend 1990 = 100)",
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
           theme(text = element_text(size = 16))
       })
+      
+      #TODO make animation
+      
+      # output$lineplot_land <- renderImage({
+      #   # A temp file to save the output.
+      #   # This file will be removed later by renderImage
+      #   outfile <- tempfile(fileext = '.gif')
+      #   
+      #   p <- fauna_biotopen %>% filter(biotoop != "open") %>%
+      #     ggplot(aes(x = jaar, color = biotoop)) +
+      #     geom_line(aes(y = trend_index)) + 
+      #     ylab("Index") +
+      #     theme_bw() +
+      #     gghighlight(label_params = list(size = 6)) +
+      #     scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
+      #     coord_cartesian(ylim = c(20,120)) +
+      #     labs(
+      #       # title = "Ontwikkeling populaties kenmerkende soorten",
+      #       subtitle = "Index (trend 1990 = 100)", 
+      #       caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
+      #     theme(text = element_text(size = 16)) + 
+      #     transition_reveal(jaar)
+      #   anim_save("outfile.gif", animate(p)) # New
+      #   
+      #   # Return a list containing the filename
+      #   list(src = "outfile.gif",
+      #        contentType = 'image/gif'
+      #        # width = 400,
+      #        # height = 300,
+      #        # alt = "This is alternate text"
+      #   )}, deleteFile = TRUE)
       
       #TODO aangeven dat gaat om kenmerkende soorten.Ergens uitleg hierover geven
       output$barplot_land <- renderPlot({
@@ -53,9 +82,12 @@ landServer <- function(id,biotoop_active) {
           unique() %>%
           ggplot() +
           geom_bar(aes(biotoop, fill = trend_gehele_periode),
-                   position = position_fill(reverse = TRUE)) +
+                   position = position_fill(reverse = TRUE)) + 
+          scale_y_continuous(labels = scales::percent) +
+          scale_fill_brewer(palette = "RdYlGn", name = "Trendklasse",
+                            labels = c("--", "-","0","+","++")) +
+          ylab("Percentage") +
           coord_flip() +
-          scale_fill_brewer(palette = "RdYlGn") +
           theme_minimal() +
           labs(
             #title = "Percentage soorten per trendbeoordeling",
@@ -63,9 +95,8 @@ landServer <- function(id,biotoop_active) {
             caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)",
             fill = "Trend") +
           theme(legend.position = "top",
-                #legend.justification = "top",
                 text = element_text(size = 16),
-                legend.text = element_text(size = 13))
+                legend.text = element_text(size = 13, face = "bold")) 
       })
     }
   )
