@@ -1,6 +1,7 @@
 # Load required packages --------------------------------------------------
 library(shiny)
 library(shinydashboard)
+library(plotly)
 library(gifski)
 library(gganimate)
 
