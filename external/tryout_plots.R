@@ -80,9 +80,8 @@ soorten_bos_vogels <- soorten_bos %>%
 shared_soort <- SharedData$new(soorten_bos_vogels, ~ soort, group = "Choose a species")
 plot_ly(shared_soort, x = ~jaar, y = ~index, color = I("darkgrey")) %>% 
   group_by(soort) %>% 
-  add_lines(x = ~jaar, y = ~index,
-            text = ~soort, hoverinfo = "text") %>% 
-  highlight(on = "plotly_hover", persistent = FALSE, selectize = TRUE, color = "lightblue")
+  add_lines(x = ~jaar, y = ~index) %>% 
+  highlight(on = "plotly_click", persistent = FALSE, selectize = TRUE, color = "lightblue")
 
 
 soort <- highlight_key(soorten_bos_vogels, ~soort)
@@ -93,17 +92,27 @@ base <- plot_ly(soort, color = I("darkgrey")) %>%
 time_series <- base %>% 
   group_by(soort) %>% 
   add_lines(x = ~jaar, y = ~index,
-            text = ~soort, hoverinfo = "text") 
+            text = ~soort, hoverinfo = "text+x+y") 
 
-highlight(
-  time_series,
+time_series
+
+s <- attrs_selected(
+  showlegend = TRUE,
+  mode = "lines+markers")
+
+
+p <- highlight(
+  layout(time_series, showlegend = TRUE),
+  # time_series,
   on = "plotly_click",
   selectize = TRUE, 
   dynamic = TRUE,
   color = "lightblue",
-  persistent = FALSE
+  persistent = FALSE,
+  selected = s
 )
 
+plotly_json(p)
 
 soorten_biotopen %>%
   filter(biotoop == "bos",
