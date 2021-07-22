@@ -16,7 +16,7 @@ lineplotBiotoopUI <- function(id,active_tab) {
   ns <- NS(id)
   box(
     title = textOutput(ns("txt_lineplot_1")),
-    plotOutput(ns("plot_bos_4"))
+    plotlyOutput(ns("plot_bos_4"))
   )
 }
 
@@ -101,21 +101,30 @@ lineplotBiotoopServer <- function(id, active_tab) {
         paste("Trend fauna", active_tab())
       })
       
-      output$plot_bos_4 <- renderPlot({
-        fauna_biotopen %>% 
+      output$plot_bos_4 <- renderPlotly({
+        gg <- fauna_biotopen %>% 
           filter(biotoop == active_tab()) %>%
           ggplot(aes(x = jaar)) +
           geom_point(aes(y = waarneming_index)) +     
           geom_line(aes(y = trend_index)) + 
           ylab("Index") +
           theme_bw() +
-          scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
-          # coord_cartesian(ylim = c(60,125)) +
-          labs(
-            #title = "Aantalsontwikkeling kenmerkende soorten 1990 - 2018",
-            subtitle = "Index 1990 = 100", 
-            caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
-          theme(text = element_text(size = 15))
+          scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) 
+        
+        p <- ggplotly(gg, dynamicTicks = TRUE) %>% 
+          layout(title = list(text = paste0("",
+                                           "<br>",
+                                           "<sup>",
+                                           "Index 1990 = 100",
+                                           "</sup>")),
+                 hovermode = "x unified",
+                 annotations = list(x = 1, y = 0.01,
+                                    text = "Data bron: NEM(Soortenorganisaties CBS)",
+                                    showarrow = F, xref = "paper", yref = "paper",
+                                    xanchor = "right", yanchor = "auto",
+                                    xshift = 0, yshift = 0,
+                                    font = list(size = 9)))
+        p
       })
       
     }

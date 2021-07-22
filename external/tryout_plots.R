@@ -7,6 +7,7 @@ library(crosstalk)
 library(gifski)
 library(gganimate)
 library(dplyr)
+devtools::install_github("ropensci/plotly") 
 
 soorten_biotopen %>% 
   filter(biotoop == "bos",
@@ -68,6 +69,66 @@ plot_ly(shared_fauna2, x = ~jaar, y = ~trend_index) %>%
   add_lines(text = ~biotoop, hoverinfo = "text") %>%  
   highlight(on = "plotly_hover", persistent = FALSE, selectize = TRUE)
 
+soorten_bos <- soorten_biotopen %>% 
+  filter(biotoop == "bos",
+         soort != "kruisbek")
+
+soorten_bos_vogels <- soorten_bos %>% 
+  filter(fauna_groep == "broedvogels",
+         soort != "kruisbek")
+#TODO hoe toevoegen aan shiny? Uitzoeken hoe zit met sharedData objects en modules
+shared_soort <- SharedData$new(soorten_bos_vogels, ~ soort, group = "Choose a species")
+plot_ly(shared_soort, x = ~jaar, y = ~index, color = I("darkgrey")) %>% 
+  group_by(soort) %>% 
+  add_lines(x = ~jaar, y = ~index,
+            text = ~soort, hoverinfo = "text") %>% 
+  highlight(on = "plotly_hover", persistent = FALSE, selectize = TRUE, color = "lightblue")
+
+
+soort <- highlight_key(soorten_bos_vogels, ~soort)
+
+base <- plot_ly(soort, color = I("darkgrey")) %>% 
+  group_by(soort)
+
+time_series <- base %>% 
+  group_by(soort) %>% 
+  add_lines(x = ~jaar, y = ~index,
+            text = ~soort, hoverinfo = "text") 
+
+highlight(
+  time_series,
+  on = "plotly_click",
+  selectize = TRUE, 
+  dynamic = TRUE,
+  color = "lightblue",
+  persistent = FALSE
+)
+
+
+soorten_biotopen %>%
+  filter(biotoop == "bos",
+         fauna_groep == "broedvogels",
+         soort != "kruisbek") %>% 
+  ggplot(aes(x = jaar, y = index, color = soort)) +
+  geom_point() + 
+  geom_line() +
+  expand_limits(x = 2020) +#ruimte voor lable soort highlight
+  gghighlight(soort == "appelvink", use_group_by = FALSE, 
+              label_params = list(size = 6, nudge_x = 60)) +
+  theme_bw() +
+  labs(
+    # title = paste("Ontwikkeling populatie-aantallen kenmerkende", 
+    #               selected_fauna(),
+    #               active_tab(), "1990 - 2019"),
+    subtitle = "Index 1990 = 100",
+    caption = "Bron: NEM (Soortenorganisaties, CBS)") +
+  theme(text = element_text(size = 15))
+
+
+
+
+
+
 pbar <- soorten_biotopen %>% 
   filter(biotoop != "open") %>% 
   filter(trend_gehele_periode != "onzeker") %>% 
@@ -122,7 +183,7 @@ animate(test, renderer = gifski_renderer())
 anim_save("test-trend-land.gif")
 
 
-soorten_biotopen %>%
+p <- soorten_biotopen %>%
   filter(biotoop == "bos",
          fauna_groep == "broedvogels",
          soort != "kruisbek") %>% 
@@ -140,8 +201,8 @@ soorten_biotopen %>%
     subtitle = "Index 1990 = 100",
     caption = "Bron: NEM (Soortenorganisaties, CBS)") +
   theme(text = element_text(size = 15))
-
-
+p
+ggplotly(p)
 
 gg <- soorten_biotopen %>% 
   filter(biotoop == "bos",
@@ -155,7 +216,7 @@ gg <- soorten_biotopen %>%
 cols <- toRGB(RColorBrewer::brewer.pal(3, "Dark2"), 0.5)
 cols <- toRGB(RColorBrewer::brewer.pal(5, "Set2"))
 gg
-
+cols <- list(cols)
 s <- attrs_selected(
   showlegend = TRUE,
   mode = "lines+markers"
@@ -169,9 +230,10 @@ highlight(
   selectize = TRUE,
   dynamic = TRUE,
   persistent = TRUE,
-  color = cols[2],
+  color = cols,
   selected = s)
 
+plotly_json(gg)
 
 soorten_biotopen %>%
   filter(biotoop == "bos",
@@ -290,5 +352,27 @@ p <- ggplotly(p, tooltip = c("text")) %>%
                             )
   )
 p
-  plotly_json(p)
+plotly_json(p)
 str(soorten_biotopen)
+
+gg <- fauna_biotopen %>% 
+    filter(biotoop == "bos") %>%
+    ggplot(aes(x = jaar)) +
+    geom_point(aes(y = waarneming_index)) +     
+    geom_line(aes(y = trend_index)) + 
+    ylab("Index") +
+    theme_bw() +
+    scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) + 
+    # coord_cartesian(ylim = c(60,125)) +
+    labs(
+      #title = "Aantalsontwikkeling kenmerkende soorten 1990 - 2018",
+      subtitle = "Index 1990 = 100", 
+      caption = "Bron: NEM (RAVON, Zoogdiervereniging, Sovon, CBS)") +
+    theme(text = element_text(size = 15))
+
+gg
+
+ggplotly(gg) %>% 
+  layout(hovermode = "x unified")
+
+
