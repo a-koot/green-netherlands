@@ -1,4 +1,4 @@
-# green-netherlands (WORK IN PROGRESS)
+# green-netherlands (Work In Progress)
 A shiny app to visualize 'green' datasets (e.g., biodiversity, green energy, etc.) from The Netherlands.  
 
 ![](www/shiny-green2.gif)
