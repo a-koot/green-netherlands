@@ -12,9 +12,9 @@ ui <- dashboardPage(skin = "green",
                menuSubItem("Bos", tabName = "bos", icon = icon("tree")),
                menuSubItem("Duinen", tabName = "duinen",icon = icon("mountain")),
                menuSubItem("Heide", tabName = "heide", icon = icon("seedling"))
-               ),
+               )
                
-      menuItem("Test", tabName = "test", icon = icon("dashboard"))
+     # menuItem("Test", tabName = "test", icon = icon("dashboard"))
                 
     )),
     

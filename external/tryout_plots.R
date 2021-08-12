@@ -113,7 +113,7 @@ p <- highlight(
 )
 
 plotly_json(p)
-
+p
 soorten_biotopen %>%
   filter(biotoop == "bos",
          fauna_groep == "broedvogels",

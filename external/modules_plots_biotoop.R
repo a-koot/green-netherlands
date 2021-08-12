@@ -112,11 +112,12 @@ lineplotBiotoopServer <- function(id, active_tab) {
           scale_x_continuous(breaks = seq(1990,2020,5), limits = c(1990,2020)) 
         
         p <- ggplotly(gg, dynamicTicks = TRUE) %>% 
-          layout(title = list(text = paste0("",
-                                           "<br>",
-                                           "<sup>",
-                                           "Index 1990 = 100",
-                                           "</sup>")),
+          layout(
+            # title = list(text = paste0("",
+            #                                "<br>",
+            #                                "<sup>",
+            #                                "Index 1990 = 100",
+            #                                "</sup>")),
                  hovermode = "x unified",
                  annotations = list(x = 1, y = 0.01,
                                     text = "Data bron: NEM(Soortenorganisaties CBS)",
